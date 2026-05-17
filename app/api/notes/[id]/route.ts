@@ -35,6 +35,27 @@ function parseNote(note: {
   };
 }
 
+
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const note = await prisma.note.findFirst({
+    where: { id: params.id, userId: session.user.id },
+  });
+
+  if (!note) {
+    return NextResponse.json({ error: "Note not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ note: parseNote(note) });
+}
+
 // PATCH /api/notes/:id
 export async function PATCH(
   req: NextRequest,

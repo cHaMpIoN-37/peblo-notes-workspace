@@ -58,7 +58,7 @@ export default function NoteEditorPage() {
         if (!res.ok) throw new Error();
 
         const data = await res.json();
-        const n: Note = data.data;
+        const n: Note = data.note;
 
         setNote(n);
         setTitle(n.title);
@@ -95,7 +95,7 @@ export default function NoteEditorPage() {
 
         if (!res.ok) throw new Error();
         const updated = await res.json();
-        setNote(updated.data);
+        setNote(updated.note);
         setSaveStatus("saved");
 
         // Reset to idle after 2s
@@ -167,7 +167,7 @@ export default function NoteEditorPage() {
 
       const data = await res.json();
       // Update local note state with AI result
-      setNote(data.data.note);
+      setNote(data.note);
 
       // If title was suggested, offer to apply it
       if (type === "suggest-title" && data.data.result) {
@@ -201,8 +201,8 @@ export default function NoteEditorPage() {
       });
 
       const data = await res.json();
-      setShareId(data.data.shareId);
-      setNote(data.data);
+      setShareId(data.note.shareId);
+      setNote(data.note);
     } catch {
       setIsPublic(!newValue); // revert on error
     }

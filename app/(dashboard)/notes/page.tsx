@@ -74,7 +74,7 @@ export default function DashboardPage() {
 
       if (!res.ok) throw new Error("Failed to create note.");
       const data = await res.json();
-      router.push(`/notes/${data.data.id}`);
+      router.push(`/notes/${data.note.id}`);
     } catch {
       setError("Could not create note. Please try again.");
       setIsCreating(false);
