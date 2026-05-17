@@ -49,23 +49,18 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: email.trim().toLowerCase(),
         password,
-        callbackUrl: "/",
+        redirect: false,
+        callbackUrl: "/notes",
       });
 
       if (result?.error) {
-        // Map NextAuth error messages to friendly ones
-        setError(
-          result.error === "No account found with this email."
-            ? "No account found with this email."
-            : result.error === "Incorrect password."
-            ? "Incorrect password. Please try again."
-            : "Login failed. Please check your credentials."
-        );
+        setError("Invalid email or password.");
         return;
       }
 
-
-
+      if (result?.ok) {
+        window.location.href = "/notes";  // force hard navigation, not router.replace
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

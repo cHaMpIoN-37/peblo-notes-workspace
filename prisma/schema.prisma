@@ -1,3 +1,9 @@
+// prisma/schema.prisma
+// Prisma schema for Collaborative AI Notes Workspace
+// SQLite does not support primitive list types, so:
+//   - `tags` is stored as a JSON string (e.g. '["work","urgent"]')
+//   - parsed/serialized in API layer using JSON.parse / JSON.stringify
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,35 +13,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────
 model User {
-  id        String    @id @default(cuid())
-  name      String?
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  notes     Note[]
-  sessions  Session[]
-  accounts  Account[]
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String                        // hashed with bcrypt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  notes         Note[]
+  sessions      Session[]
+  accounts      Account[]
 }
 
+// ─────────────────────────────────────────────
+// NOTE
+// ─────────────────────────────────────────────
 model Note {
-  id             String    @id @default(cuid())
-  title          String    @default("Untitled Note")
-  content        String    @default("")
-  tags           String    @default("[]")
-  summary        String?
-  actionItems    String?
+  id            String    @id @default(cuid())
+  title         String    @default("Untitled Note")
+  content       String    @default("")
+
+  // SQLite cannot store String[], so tags are stored as a
+  // JSON-encoded string: '["tag1","tag2"]'
+  // Always use JSON.parse(note.tags) when reading,
+  // and JSON.stringify(tagsArray) when writing.
+  tags          String    @default("[]")
+
+  // AI-generated fields (populated on demand via Gemini)
+  summary       String?
+  actionItems   String?                       // JSON array string: '["item1","item2"]'
   suggestedTitle String?
-  isPublic       Boolean   @default(false)
-  shareId        String?   @unique
-  isArchived     Boolean   @default(false)
-  lastSavedAt    DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  userId         String
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Public sharing
+  isPublic      Boolean   @default(false)
+  shareId       String?   @unique            // random slug for public link
+
+  // Auto-save metadata
+  lastSavedAt   DateTime  @default(now())
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  isArchived    Boolean   @default(false)
 }
+
+// ─────────────────────────────────────────────
+// NEXTAUTH REQUIRED MODELS
+// ─────────────────────────────────────────────
 
 model Account {
   id                String  @id @default(cuid())
@@ -50,7 +82,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -60,7 +93,8 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

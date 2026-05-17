@@ -102,8 +102,7 @@ export default function SignupPage() {
       }
 
       // 4. Success → dashboard
-      router.push("/");
-      router.refresh();
+      router.replace("/notes");
 
     } catch {
       setError("Something went wrong. Please try again.");
